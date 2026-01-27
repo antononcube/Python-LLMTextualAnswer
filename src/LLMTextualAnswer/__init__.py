@@ -190,13 +190,13 @@ def LLMTextualAnswer(
     questions: Union[str, Sequence[str]],
     form: FormType = Automatic,
     *,
-    prelude: Union[str, _AutomaticType] = Automatic,
-    prompt: Union[str, _AutomaticType] = Automatic,
-    request: Union[str, _AutomaticType] = Automatic,
+    prelude: Optional[Union[str, _AutomaticType]] = Automatic,
+    prompt: Optional[Union[str, _AutomaticType]] = Automatic,
+    request: Optional[Union[str, _AutomaticType]] = Automatic,
     llm: Optional[Any] = None,
     llm_call: Optional[Callable[..., Any]] = None,
-    llm_call_form: Union[str, _AutomaticType] = Automatic,
-    prompt_style: Union[str, _AutomaticType] = Automatic,
+    llm_call_form: Optional[Union[str, _AutomaticType]] = Automatic,
+    prompt_style: Optional[Union[str, _AutomaticType]] = Automatic,
     **llm_options: Any,
 ) -> Any:
     """Find textual answers for questions using an LLM call.
@@ -211,6 +211,8 @@ def LLMTextualAnswer(
     qs = _normalize_questions(questions)
     normalized_form = _normalize_form(form)
 
+    if prelude is None:
+        prelude = Automatic
     if prelude is Automatic:
         prelude_value = DEFAULT_PRELUDE
     elif isinstance(prelude, str):
@@ -218,6 +220,8 @@ def LLMTextualAnswer(
     else:
         raise LLMTextualAnswerError("Prelude must be a string or Automatic.")
 
+    if prompt is None:
+        prompt = Automatic
     if prompt is Automatic:
         prompt_value = DEFAULT_PROMPT
     elif isinstance(prompt, str):
@@ -225,6 +229,8 @@ def LLMTextualAnswer(
     else:
         raise LLMTextualAnswerError("Prompt must be a string or Automatic.")
 
+    if request is None:
+        request = Automatic
     if request is Automatic:
         request_text = _default_request(qs)
     elif isinstance(request, str):
@@ -232,6 +238,8 @@ def LLMTextualAnswer(
     else:
         raise LLMTextualAnswerError("Request must be a string or Automatic.")
 
+    if llm_call_form is None:
+        llm_call_form = Automatic
     if llm_call_form is Automatic:
         if normalized_form in {"dict", "list", "auto"} and prompt_value == DEFAULT_PROMPT:
             response_format = "string"
@@ -253,6 +261,8 @@ def LLMTextualAnswer(
             "llm (or llm_call) must be provided to invoke the LLM or build the LLMFunction."
         )
 
+    if prompt_style is None:
+        prompt_style = Automatic
     if prompt_style is Automatic:
         prompt_style_value = "auto"
     else:
