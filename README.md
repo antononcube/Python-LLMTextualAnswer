@@ -37,7 +37,7 @@ result = LLMTextualAnswer(
 print(result)
 ```
 
-For more detailed examples see the notebook ["./docs/Basic-usage.ipynb"](./docs/Basic-usage.ipynb).
+For more detailed examples see the notebook ["./docs/Basic-usage.ipynb"](https://github.com/antononcube/Python-LLMTextualAnswer/blob/main/docs/Basic-usage.ipynb).
 
 -----
 
