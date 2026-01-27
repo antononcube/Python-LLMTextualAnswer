@@ -159,13 +159,21 @@ def _remove_code_fences(text: str) -> str:
     return stripped
 
 
-def _default_request(questions: Sequence[str]) -> str:
+def _default_request(questions: Sequence[str], n: int = 1) -> str:
     plural = "s" if len(questions) > 1 else ""
-    if len(questions) == 1:
-        prefix = "give the shortest answer"
+    if n > 1:
+        if len(questions) == 1:
+            prefix = f"give the top {n} answers for"
+        else:
+            prefix = f"list the top {n} answers for each of"
+        return f"{prefix} the question{plural}:" + "".join(questions)
     else:
-        prefix = "list the shortest answers"
-    return f"{prefix} of the question{plural}:" + "".join(questions)
+        if len(questions) == 1:
+            prefix = "give the shortest answer"
+        else:
+            prefix = "list the shortest answers"
+        return f"{prefix} of the question{plural}:" + "".join(questions)
+
 
 
 def _build_template(prelude: str, request_text: str) -> str:
@@ -188,6 +196,7 @@ def _select_prompt_style(llm: Any, prompt_style: str) -> bool:
 def LLMTextualAnswer(
     text: str,
     questions: Union[str, Sequence[str]],
+    n: int = 1,
     form: FormType = Automatic,
     *,
     prelude: Optional[Union[str, _AutomaticType]] = Automatic,
@@ -232,7 +241,7 @@ def LLMTextualAnswer(
     if request is None:
         request = Automatic
     if request is Automatic:
-        request_text = _default_request(qs)
+        request_text = _default_request(qs, n)
     elif isinstance(request, str):
         request_text = request + "".join(qs)
     else:
