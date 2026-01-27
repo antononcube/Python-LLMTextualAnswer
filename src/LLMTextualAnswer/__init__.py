@@ -113,7 +113,7 @@ def _normalize_questions(questions: Union[str, Sequence[str]]) -> List[str]:
 
 
 def _normalize_form(form: FormType) -> str:
-    if form is Automatic:
+    if form is Automatic or form is None:
         return "auto"
     if isinstance(form, type):
         mapping = {str: "string", dict: "dict", list: "list"}
@@ -123,12 +123,16 @@ def _normalize_form(form: FormType) -> str:
         mapping = {
             "String": "string",
             "string": "string",
+            "str": "string",
             "JSON": "dict",
+            "json": "dict",
             "Association": "dict",
+            "dictionary": "dict",
             "dict": "dict",
             "List": "list",
             "list": "list",
             "Automatic": "auto",
+            "Whatever": "auto",
             "auto": "auto",
             "Function": "function",
             "function": "function",
