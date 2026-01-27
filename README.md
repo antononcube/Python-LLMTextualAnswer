@@ -2,11 +2,15 @@
 
 Python package for finding textual answers via LLMs. This is a Python port of the Wolfram Language `LLMTextualAnswer` function, focused on building prompts, wiring LangChain models, and parsing structured outputs.
 
+-----
+
 ## Install
 
 ```bash
 pip install LLMTextualAnswer
 ```
+
+-----
 
 ## Usage
 
@@ -32,6 +36,10 @@ result = LLMTextualAnswer(
 
 print(result)
 ```
+
+For more detailed examples see the notebook ["./docs/Basic-usage.ipynb"](./docs/Basic-usage.ipynb).
+
+-----
 
 ## Notes
 
