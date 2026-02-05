@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
+import re
+
 try:
     from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
@@ -50,6 +52,7 @@ class LLMFunction:
     llm: Any
     llm_options: Dict[str, Any]
     prompt_style: str = "auto"
+    echo: bool = False
 
     def __call__(self, text: str) -> Any:
         if StrOutputParser is None or JsonOutputParser is None:
@@ -58,6 +61,9 @@ class LLMFunction:
             )
 
         query = self.template.format(text=text)
+
+        if self.echo:
+            print(query)
 
         if callable(self.llm) and not hasattr(self.llm, "invoke"):
             return self.llm(
@@ -206,6 +212,7 @@ def LLMTextualAnswer(
     llm_call: Optional[Callable[..., Any]] = None,
     llm_call_form: Optional[Union[str, _AutomaticType]] = Automatic,
     prompt_style: Optional[Union[str, _AutomaticType]] = Automatic,
+    echo: bool = False,
     **llm_options: Any,
 ) -> Any:
     """Find textual answers for questions using an LLM call.
@@ -288,6 +295,7 @@ def LLMTextualAnswer(
         llm=llm_value,
         llm_options=llm_options,
         prompt_style=prompt_style_value,
+        echo=echo,
     )
 
     if normalized_form == "llm_function":
@@ -335,6 +343,105 @@ def llm_textual_answer(*args: Any, **kwargs: Any) -> Any:
     return LLMTextualAnswer(*args, **kwargs)
 
 
+def _normalize_class_labels(class_labels: Sequence[Any]) -> List[str]:
+    if not isinstance(class_labels, Sequence) or isinstance(
+        class_labels, (str, bytes, bytearray)
+    ):
+        raise LLMTextualAnswerError("class_labels must be a sequence of labels.")
+    if not class_labels:
+        raise LLMTextualAnswerError("class_labels cannot be empty.")
+    return [str(label) for label in class_labels]
+
+
+def _build_classify_question(class_labels: Sequence[str], epilog: Any) -> str:
+    question_lines = [
+        f"{index}) {label}" for index, label in enumerate(class_labels, start=1)
+    ]
+    question = "\n".join(question_lines)
+    if epilog is None or epilog is Automatic:
+        question += "\nYour answer should have one of the labels and nothing else."
+    elif isinstance(epilog, str):
+        question += epilog
+    else:
+        raise LLMTextualAnswerError("epilog must be a string or Automatic.")
+    return question
+
+
+def _extract_classification(result: Any, class_labels: Sequence[str]) -> Any:
+    if isinstance(result, dict) and result:
+        result = next(iter(result.values()))
+    elif isinstance(result, (list, tuple, set)) and result:
+        result = next(iter(result))
+
+    if not isinstance(result, str):
+        return result
+
+    match = re.match(r"^\s*(\d+)", result)
+    if match:
+        index = int(match.group(1))
+        if 1 <= index <= len(class_labels):
+            return class_labels[index - 1]
+        return match.group(1)
+
+    matches = [label for label in class_labels if label in result]
+    if matches:
+        return matches
+    return result
+
+
+def llm_classify(
+    text: Union[str, Sequence[str]],
+    class_labels: Sequence[Any],
+    *,
+    epilog: Optional[Union[str, _AutomaticType]] = Automatic,
+    request: Optional[Union[str, _AutomaticType]] = "which of these labels characterizes it:",
+    form: FormType = "string",
+    llm: Optional[Any] = None,
+    llm_call: Optional[Callable[..., Any]] = None,
+    echo: bool = False,
+    **llm_options: Any,
+) -> Any:
+    """Classify text into the given labels using an LLM."""
+
+    labels = _normalize_class_labels(class_labels)
+    question = _build_classify_question(labels, epilog)
+
+    if isinstance(text, Sequence) and not isinstance(text, (str, bytes, bytearray)):
+        return [
+            llm_classify(
+                item,
+                labels,
+                epilog=epilog,
+                request=request,
+                form=form,
+                llm=llm,
+                llm_call=llm_call,
+                echo=echo,
+                **llm_options,
+            )
+            for item in text
+        ]
+
+    if not isinstance(text, str):
+        raise LLMTextualAnswerError("Text must be a string.")
+
+    result = llm_textual_answer(
+        text,
+        question,
+        n = 1,
+        form=form,
+        request=request,
+        llm=llm,
+        llm_call=llm_call,
+        **llm_options,
+    )
+
+    if echo:
+        print("llm_textual_answer result: " + str(result))
+
+    return _extract_classification(result, labels)
+
+
 __all__ = [
     "Automatic",
     "DEFAULT_PRELUDE",
@@ -342,5 +449,6 @@ __all__ = [
     "LLMFunction",
     "LLMTextualAnswer",
     "LLMTextualAnswerError",
+    "llm_classify",
     "llm_textual_answer",
 ]
