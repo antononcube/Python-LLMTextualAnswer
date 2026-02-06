@@ -198,6 +198,9 @@ def _select_prompt_style(llm: Any, prompt_style: str) -> bool:
         return True
     return False
 
+# =========================================================
+# LLM textual answer
+# =========================================================
 
 def LLMTextualAnswer(
     text: str,
@@ -342,6 +345,9 @@ def LLMTextualAnswer(
 def llm_textual_answer(*args: Any, **kwargs: Any) -> Any:
     return LLMTextualAnswer(*args, **kwargs)
 
+# =========================================================
+# LLM classification helpers
+# =========================================================
 
 def _normalize_class_labels(class_labels: Sequence[Any]) -> List[str]:
     if not isinstance(class_labels, Sequence) or isinstance(
@@ -353,11 +359,11 @@ def _normalize_class_labels(class_labels: Sequence[Any]) -> List[str]:
     return [str(label) for label in class_labels]
 
 
-def _build_classify_question(class_labels: Sequence[str], epilog: Any) -> str:
+def _build_classify_question(class_labels: Sequence[str], epilog: Any, sep: str="\n") -> str:
     question_lines = [
         f"{index}) {label}" for index, label in enumerate(class_labels, start=1)
     ]
-    question = "\n".join(question_lines)
+    question = sep.join(question_lines)
     if epilog is None or epilog is Automatic:
         question += "\nYour answer should have one of the labels and nothing else."
     elif isinstance(epilog, str):
@@ -369,9 +375,9 @@ def _build_classify_question(class_labels: Sequence[str], epilog: Any) -> str:
 
 def _extract_classification(result: Any, class_labels: Sequence[str]) -> Any:
     if isinstance(result, dict) and result:
-        result = next(iter(result.values()))
+        return next(iter(result.values()))
     elif isinstance(result, (list, tuple, set)) and result:
-        result = next(iter(result))
+        return next(iter(result))
 
     if not isinstance(result, str):
         return result
@@ -388,6 +394,9 @@ def _extract_classification(result: Any, class_labels: Sequence[str]) -> Any:
         return matches
     return result
 
+# =========================================================
+# LLM classify
+# =========================================================
 
 def llm_classify(
     text: Union[str, Sequence[str]],
@@ -399,12 +408,13 @@ def llm_classify(
     llm: Optional[Any] = None,
     llm_call: Optional[Callable[..., Any]] = None,
     echo: bool = False,
+    sep: str = " ;\n",
     **llm_options: Any,
 ) -> Any:
     """Classify text into the given labels using an LLM."""
 
     labels = _normalize_class_labels(class_labels)
-    question = _build_classify_question(labels, epilog)
+    question = _build_classify_question(labels, epilog, sep=sep)
 
     if isinstance(text, Sequence) and not isinstance(text, (str, bytes, bytearray)):
         return [
@@ -437,10 +447,13 @@ def llm_classify(
     )
 
     if echo:
-        print("llm_textual_answer result: " + str(result))
+        print("llm_textual_answer result:\n" + str(result))
 
     return _extract_classification(result, labels)
 
+# =========================================================
+# Package symbols
+# =========================================================
 
 __all__ = [
     "Automatic",
