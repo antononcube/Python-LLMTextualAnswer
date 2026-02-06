@@ -39,8 +39,6 @@ result = LLMTextualAnswer(
 print(result)
 ```
 
-For more detailed examples see the notebook ["https://github.com/antononcube/Python-LLMTextualAnswer/blob/main/docs/Basic-usage.ipynb"](https://github.com/antononcube/Python-LLMTextualAnswer/blob/main/docs/Basic-usage.ipynb).
-
 
 ### Classification
 
@@ -89,6 +87,7 @@ for q in queries:
 
 ## Notes
 
-- `LLMTextualAnswer` accepts LangChain chat/text models that support `.invoke`.
+- For more detailed examples see the notebook ["Basic-usage.ipynb](https://github.com/antononcube/Python-LLMTextualAnswer/blob/main/docs/Basic-usage.ipynb).
+- `llm_textual_answer` and `llm_classify` accept ["LangChain"](https://docs.langchain.com/oss/python/langchain/overview) chat/text models that support `.invoke`.
 - Use `prompt_style="chat"` or `prompt_style="text"` if auto-detection is not desired.
 - When you want only the prompt template, pass `form="StringTemplate"`.
